@@ -1,11 +1,12 @@
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-std::vector<std::vector<float>> mat2array(const cv::Mat &src_img) {
+std::vector<std::vector<float>> mat2array(const cv::Mat &src_img)
+{
   size_t row = src_img.rows;
   size_t col = src_img.cols;
   std::vector<std::vector<float>> img(row, std::vector<float>(col, 0));
@@ -20,7 +21,8 @@ std::vector<std::vector<float>> mat2array(const cv::Mat &src_img) {
   return img;
 }
 
-cv::Mat array2mat(const std::vector<std::vector<float>> array_img) {
+cv::Mat array2mat(const std::vector<std::vector<float>> array_img)
+{
   int row = array_img.size();
   int col = array_img.data()->size();
   cv::Mat compute_img = cv::Mat::zeros(cv::Size(col, row), CV_8U);
@@ -34,10 +36,42 @@ cv::Mat array2mat(const std::vector<std::vector<float>> array_img) {
   return compute_img;
 }
 
-int main() {
-  cv::Mat src_img = cv::imread("./test.jpg", 0);
+std::vector<std::vector<float>> compute_weblet(
+    const std::vector<std::vector<float>> img)
+{
+  auto father_weblet = [](const float x) -> float {
+    return (0 <= x && x < 0.5) ? 1 : (0.5 <= x && x < 1) ? -1 : 0;
+  };
+  auto weblet_function = [&father_weblet](const int j, const int k,
+                                          const int x) -> float {
+    return exp2(j / 2.0) * father_weblet(exp2(j) * x - k);
+  };
+  std::vector<std::vector<float>> compute_img(img);
+  int row = img.size();
+  int col = img.data()->size();
+  for(
+  return compute_img;
+}
+
+cv::Mat load_img(std::string path, int n)
+{
+  cv::Mat src = cv::imread(path, n);
+  auto to2base = [](size_t x) -> size_t { return pow(2, ceil(log2(x))); };
+  cv::Rect roi_rect;
+  roi_rect.width = src.cols;
+  roi_rect.height = src.rows;
+  cv::Mat padded =
+      cv::Mat::zeros(cv::Size(to2base(src.cols), to2base(src.rows)), CV_8U);
+  cv::Mat roi(padded, roi_rect);
+  src.copyTo(roi);
+  return padded;
+}
+
+int main()
+{
+  cv::Mat src_img = load_img("./kato.jpg", 0);
   cv::imshow("src", src_img);
-  cv::Mat compute_img = array2mat(mat2array(src_img));
+  cv::Mat compute_img = array2mat(compute_weblet(mat2array(src_img)));
   cv::imshow("compute", compute_img);
   cv::waitKey(0);
   return 0;
