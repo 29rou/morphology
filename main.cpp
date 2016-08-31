@@ -36,20 +36,30 @@ cv::Mat array2mat(const std::vector<std::vector<float>> array_img)
   return compute_img;
 }
 
+std::vector<std::vector<float>> wevlet_matrix_gen(const int N)
+{
+  std::vector<std::vector<float>> wevlet_matrix(N,
+                                                std::vector<float>(N, sqrt(N)));
+  for (int i = 0; i < N; i++) {
+    if (i == 0) continue;
+    for (int j = 0; j < N; j++) {
+      if () {
+      }
+      else if () {
+      }
+      else {
+        wevlet_matrix.at(i).at(j) = 0;
+      }
+    }
+  }
+  return wevlet_matrix;
+}
 std::vector<std::vector<float>> compute_weblet(
     const std::vector<std::vector<float>> img)
 {
-  auto father_weblet = [](const float x) -> float {
-    return (0 <= x && x < 0.5) ? 1 : (0.5 <= x && x < 1) ? -1 : 0;
-  };
-  auto weblet_function = [&father_weblet](const int j, const int k,
-                                          const int x) -> float {
-    return exp2(j / 2.0) * father_weblet(exp2(j) * x - k);
-  };
   std::vector<std::vector<float>> compute_img(img);
   int row = img.size();
   int col = img.data()->size();
-  for(
   return compute_img;
 }
 
