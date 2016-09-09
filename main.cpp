@@ -15,7 +15,6 @@ std::vector<std::vector<float>> mat2array(const cv::Mat &src_img)
   for (y = 0; y < row; y++) {
     for (x = 0; x < col; x++) {
       img.at(y).at(x) = src_img.at<uint8_t>(y, x);
-      ;
     }
   }
   return img;
@@ -36,30 +35,29 @@ cv::Mat array2mat(const std::vector<std::vector<float>> array_img)
   return compute_img;
 }
 
-std::vector<std::vector<float>> wevlet_matrix_gen(const int N)
+auto phi = [](float x) -> float {
+  return (0 < x && x < 1) ? 1 : (-1 < x && x < 0) ? -1 : 0;
+};
+
+std::vector<std::vector<std::vector<float>>> compute_weblet(
+    const std::vector<std::vector<float>> img)
 {
-  std::vector<std::vector<float>> wevlet_matrix(N,
-                                                std::vector<float>(N, sqrt(N)));
-  for (int i = 0; i < N; i++) {
-    if (i == 0) continue;
-    for (int j = 0; j < N; j++) {
-      if () {
-      }
-      else if () {
-      }
-      else {
-        wevlet_matrix.at(i).at(j) = 0;
+  std::vector<std::vector<std::vector<float>>> compute_img(
+      log2(img.data()->size()), img);
+  std::vector<float> sum(img.size(), 0);
+  int row = img.size();
+  int col = img.data()->size();
+#pragma omp parallel for
+  for (int i = 0; i < row; i++) {
+    for (int freq = 1; freq < log2(col); freq++) {
+      for (int j = 0; j < col; j++) {
+        for (int k = 0; k < col; k++) {
+          sum.at(i) += img.at(i).at(k) * phi((k - j) / freq);
+        }
+        compute_img.at(freq - 1).at(i).at(j) = sum.at(i) / sqrt(freq);
       }
     }
   }
-  return wevlet_matrix;
-}
-std::vector<std::vector<float>> compute_weblet(
-    const std::vector<std::vector<float>> img)
-{
-  std::vector<std::vector<float>> compute_img(img);
-  int row = img.size();
-  int col = img.data()->size();
   return compute_img;
 }
 
@@ -81,8 +79,11 @@ int main()
 {
   cv::Mat src_img = load_img("./kato.jpg", 0);
   cv::imshow("src", src_img);
-  cv::Mat compute_img = array2mat(compute_weblet(mat2array(src_img)));
-  cv::imshow("compute", compute_img);
-  cv::waitKey(0);
+  auto weblet = compute_weblet(mat2array(src_img));
+  for (auto &i : weblet) {
+    cv::Mat compute_img = array2mat(i);
+    cv::imshow("compute", compute_img);
+    cv::waitKey(5);
+  }
   return 0;
 }
