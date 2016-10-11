@@ -35,10 +35,6 @@ cv::Mat array2mat(const std::vector<std::vector<float>> array_img)
   return compute_img;
 }
 
-auto phi = [](float x) -> float {
-  return (0 < x && x < 1) ? 1 : (-1 < x && x < 0) ? -1 : 0;
-};
-
 std::vector<std::vector<std::vector<float>>> compute_weblet(
     const std::vector<std::vector<float>> img)
 {
