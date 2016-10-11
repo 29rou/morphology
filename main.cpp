@@ -35,31 +35,10 @@ cv::Mat array2mat(const std::vector<std::vector<float>> array_img)
   return compute_img;
 }
 
-std::vector<std::vector<std::vector<float>>> compute_weblet(
-    const std::vector<std::vector<float>> img)
-{
-  std::vector<std::vector<std::vector<float>>> compute_img(
-      log2(img.data()->size()), img);
-  std::vector<float> sum(img.size(), 0);
-  int row = img.size();
-  int col = img.data()->size();
-#pragma omp parallel for
-  for (int i = 0; i < row; i++) {
-    for (int freq = 1; freq < log2(col); freq++) {
-      for (int j = 0; j < col; j++) {
-        for (int k = 0; k < col; k++) {
-          sum.at(i) += img.at(i).at(k) * phi((k - j) / freq);
-        }
-        compute_img.at(freq - 1).at(i).at(j) = sum.at(i) / sqrt(freq);
-      }
-    }
-  }
-  return compute_img;
-}
-
 cv::Mat load_img(std::string path, int n)
 {
   cv::Mat src = cv::imread(path, n);
+  cv::threshold(src, src, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
   auto to2base = [](size_t x) -> size_t { return pow(2, ceil(log2(x))); };
   cv::Rect roi_rect;
   roi_rect.width = src.cols;
@@ -75,11 +54,6 @@ int main()
 {
   cv::Mat src_img = load_img("./kato.jpg", 0);
   cv::imshow("src", src_img);
-  auto weblet = compute_weblet(mat2array(src_img));
-  for (auto &i : weblet) {
-    cv::Mat compute_img = array2mat(i);
-    cv::imshow("compute", compute_img);
-    cv::waitKey(5);
-  }
+  cv::waitKey(0);
   return 0;
 }
