@@ -54,6 +54,8 @@ int main()
 {
   cv::Mat src_img = load_img("./kato.jpg", 0);
   cv::imshow("src", src_img);
+  auto array_img = mat2array(src_img);
+  auto result_img = array2mat(array_img);
   cv::waitKey(0);
   return 0;
 }
