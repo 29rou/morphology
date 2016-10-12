@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <numeric>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -47,10 +48,11 @@ cv::Mat load_img(std::string path, int n)
 }
 
 std::vector<std::vector<bool>> padding(
-    const std::vector<std::vector<bool>> src_array)
+    const std::vector<std::vector<bool>> src_array, const bool padd_with)
 {
   std::vector<std::vector<bool>> padded_array(
-      src_array.size() + 2, std::vector<bool>(src_array.data()->size(), false));
+      src_array.size() + 2,
+      std::vector<bool>(src_array.data()->size() + 2, padd_with));
   int i, j;
 #pragma omp parallel for private(i, j) collapse(2)
   for (i = 0; i < src_array.size(); i++) {
@@ -61,11 +63,38 @@ std::vector<std::vector<bool>> padding(
   return padded_array;
 }
 
+std::vector<std::vector<bool>> suppressing(
+    const std::vector<std::vector<bool>> src_array)
+{
+  std::vector<std::vector<bool>> suppressed_array(
+      src_array.size(), std::vector<bool>(src_array.data()->size(), false));
+  int i, j;
+#pragma omp parallel for private(i, j) collapse(2)
+  for (i = 0; i < suppressed_array.size(); i++) {
+    for (j = 0; j < suppressed_array.data()->size(); j++) {
+      suppressed_array.at(i).at(j) = src_array.at(i + 1).at(j + 1);
+    }
+  }
+  return suppressed_array;
+}
+
 std::vector<std::vector<bool>> dilation(
     const std::vector<std::vector<bool>> src_array)
 {
   std::vector<std::vector<bool>> dilated_array(
       src_array.size(), std::vector<bool>(src_array.data()->size(), false));
+  int i, j;
+#pragma omp parallel for private(i, j) collapse(2)
+  for (i = 1; i < src_array.size() - 1; i++) {
+    for (j = 1; j < src_array.data()->size() - 1; j++) {
+      dilated_array.at(i).at(j) =
+          src_array.at(i - 1).at(j - 1) || src_array.at(i - 1).at(j) ||
+          src_array.at(i - 1).at(j + 1) || src_array.at(i).at(j - 1) ||
+          src_array.at(i).at(j) || src_array.at(i).at(j + 1) ||
+          src_array.at(i + 1).at(j - 1) || src_array.at(i + 1).at(j) ||
+          src_array.at(i + 1).at(j + 1);
+    }
+  }
   return dilated_array;
 }
 
@@ -74,16 +103,53 @@ std::vector<std::vector<bool>> erosion(
 {
   std::vector<std::vector<bool>> erosed_array(
       src_array.size(), std::vector<bool>(src_array.data()->size(), false));
+  int i, j;
+#pragma omp parallel for private(i, j) collapse(2)
+  for (i = 1; i < src_array.size() - 1; i++) {
+    for (j = 1; j < src_array.data()->size() - 1; j++) {
+      erosed_array.at(i).at(j) =
+          src_array.at(i - 1).at(j - 1) && src_array.at(i - 1).at(j) &&
+          src_array.at(i - 1).at(j + 1) && src_array.at(i).at(j - 1) &&
+          src_array.at(i).at(j) && src_array.at(i).at(j + 1) &&
+          src_array.at(i + 1).at(j - 1) && src_array.at(i + 1).at(j) &&
+          src_array.at(i + 1).at(j + 1);
+    }
+  }
   return erosed_array;
+}
+
+std::vector<std::vector<bool>> opening(
+    const std::vector<std::vector<bool>> src_array, const int n)
+{
+  auto computed_array = src_array;
+  for (int i = 0; i < n; i++) {
+    computed_array = dilation(computed_array);
+  }
+  return computed_array;
+}
+
+std::vector<std::vector<bool>> closing(
+    const std::vector<std::vector<bool>> src_array, const int n)
+{
+  auto computed_array = src_array;
+  for (int i = 0; i < n; i++) {
+    computed_array = erosion(computed_array);
+  }
+  return computed_array;
 }
 
 std::vector<std::vector<bool>> morphology_main_func(
     const std::vector<std::vector<bool>> src_array)
 {
-  auto padded_array = padding(src_array);
-  std::vector<std::vector<bool>> compute_array(
-      src_array.size(), std::vector<bool>(src_array.data()->size()));
-  return compute_array;
+  std::cout << "padding" << std::endl;
+  auto padded_array = padding(src_array, false);
+  std::cout << "opening" << std::endl;
+  auto opened_array = opening(padded_array, 5);
+  std::cout << "closing" << std::endl;
+  auto closed_array = closing(opened_array, 5);
+  std::cout << "suppressing" << std::endl;
+  auto suppressed_array = suppressing(closed_array);
+  return suppressed_array;
 }
 
 int main()
@@ -91,6 +157,8 @@ int main()
   cv::Mat src_img = load_img("./kato.jpg", 0);
   cv::imshow("src", src_img);
   auto array_img = mat2array(src_img);
+  std::cout << "start" << std::endl;
+  auto computed_array = morphology_main_func(array_img);
   auto result_img = array2mat(array_img);
   cv::imshow("result", result_img);
   cv::waitKey(0);
