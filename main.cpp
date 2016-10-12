@@ -9,13 +9,13 @@ std::vector<std::vector<bool>> mat2array(const cv::Mat &src_img)
 {
   size_t row = src_img.rows;
   size_t col = src_img.cols;
-  std::vector<std::vector<bool>> img(row, std::vector<bool>(col, 0));
+  std::vector<std::vector<bool>> img(row, std::vector<bool>(col, false));
   int y, x;
 #pragma omp parallel for private(y, x) collapse(2)
   for (y = 0; y < row; y++) {
     for (x = 0; x < col; x++) {
       if (src_img.at<uint8_t>(y, x) != 0) {
-        img.at(y).at(x) = 1;
+        img.at(y).at(x) = true;
       }
     }
   }
@@ -31,7 +31,7 @@ cv::Mat array2mat(const std::vector<std::vector<bool>> array_img)
 #pragma omp parallel for private(y, x) collapse(2)
   for (y = 0; y < row; y++) {
     for (x = 0; x < col; x++) {
-      if (array_img.at(y).at(x) == 1) {
+      if (array_img.at(y).at(x)) {
         compute_img.at<uint8_t>(y, x) = 255;
       }
     }
@@ -46,11 +46,43 @@ cv::Mat load_img(std::string path, int n)
   return src;
 }
 
-std::vector<std::vector<float>> morphology_main_func(
-    const std::vector<std::vector<float>> src_array)
+std::vector<std::vector<bool>> padding(
+    const std::vector<std::vector<bool>> src_array)
 {
-  std::vector<std::vector<float>> compute_array(
-      src_array.size() - 2, std::vector<float>(src_array.data()->size() - 2));
+  std::vector<std::vector<bool>> padded_array(
+      src_array.size() + 2, std::vector<bool>(src_array.data()->size(), false));
+  int i, j;
+#pragma omp parallel for private(i, j) collapse(2)
+  for (i = 0; i < src_array.size(); i++) {
+    for (j = 0; j < src_array.data()->size(); j++) {
+      padded_array.at(i + 1).at(j + 1) = src_array.at(i).at(j);
+    }
+  }
+  return padded_array;
+}
+
+std::vector<std::vector<bool>> dilation(
+    const std::vector<std::vector<bool>> src_array)
+{
+  std::vector<std::vector<bool>> dilated_array(
+      src_array.size(), std::vector<bool>(src_array.data()->size(), false));
+  return dilated_array;
+}
+
+std::vector<std::vector<bool>> erosion(
+    const std::vector<std::vector<bool>> src_array)
+{
+  std::vector<std::vector<bool>> erosed_array(
+      src_array.size(), std::vector<bool>(src_array.data()->size(), false));
+  return erosed_array;
+}
+
+std::vector<std::vector<bool>> morphology_main_func(
+    const std::vector<std::vector<bool>> src_array)
+{
+  auto padded_array = padding(src_array);
+  std::vector<std::vector<bool>> compute_array(
+      src_array.size(), std::vector<bool>(src_array.data()->size()));
   return compute_array;
 }
 
