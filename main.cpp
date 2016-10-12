@@ -67,7 +67,8 @@ std::vector<std::vector<bool>> suppressing(
     const std::vector<std::vector<bool>> src_array)
 {
   std::vector<std::vector<bool>> suppressed_array(
-      src_array.size(), std::vector<bool>(src_array.data()->size(), false));
+      src_array.size() - 2,
+      std::vector<bool>(src_array.data()->size() - 2, false));
   int i, j;
 #pragma omp parallel for private(i, j) collapse(2)
   for (i = 0; i < suppressed_array.size(); i++) {
@@ -144,9 +145,9 @@ std::vector<std::vector<bool>> morphology_main_func(
   std::cout << "padding" << std::endl;
   auto padded_array = padding(src_array, false);
   std::cout << "opening" << std::endl;
-  auto opened_array = opening(padded_array, 5);
+  auto opened_array = opening(padded_array, 10);
   std::cout << "closing" << std::endl;
-  auto closed_array = closing(opened_array, 5);
+  auto closed_array = closing(opened_array, 10);
   std::cout << "suppressing" << std::endl;
   auto suppressed_array = suppressing(closed_array);
   return suppressed_array;
@@ -159,7 +160,7 @@ int main()
   auto array_img = mat2array(src_img);
   std::cout << "start" << std::endl;
   auto computed_array = morphology_main_func(array_img);
-  auto result_img = array2mat(array_img);
+  auto result_img = array2mat(computed_array);
   cv::imshow("result", result_img);
   cv::waitKey(0);
   return 0;
