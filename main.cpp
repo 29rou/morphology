@@ -140,26 +140,26 @@ std::vector<std::vector<bool>> closing(
 }
 
 std::vector<std::vector<bool>> morphology_main_func(
-    const std::vector<std::vector<bool>> src_array)
+    const std::vector<std::vector<bool>> src_array, const int count)
 {
   std::cout << "padding" << std::endl;
   auto padded_array = padding(src_array, false);
   std::cout << "opening" << std::endl;
-  auto opened_array = opening(padded_array, 10);
+  auto opened_array = opening(padded_array, count);
   std::cout << "closing" << std::endl;
-  auto closed_array = closing(opened_array, 10);
+  auto closed_array = closing(opened_array, count);
   std::cout << "suppressing" << std::endl;
   auto suppressed_array = suppressing(closed_array);
   return suppressed_array;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-  cv::Mat src_img = load_img("./kato.jpg", 0);
+  cv::Mat src_img = load_img(argv[1], 0);
   cv::imshow("src", src_img);
   auto array_img = mat2array(src_img);
   std::cout << "start" << std::endl;
-  auto computed_array = morphology_main_func(array_img);
+  auto computed_array = morphology_main_func(array_img, atoi(argv[2]));
   auto result_img = array2mat(computed_array);
   cv::imshow("result", result_img);
   cv::waitKey(0);
