@@ -42,6 +42,14 @@ cv::Mat load_img(std::string path, int n)
   return src;
 }
 
+std::vector<std::vector<float>> morphology_main_func(
+    const std::vector<std::vector<float>> src_array)
+{
+  std::vector<std::vector<float>> compute_array(
+      src_array.size() - 2, std::vector<float>(src_array.data()->size() - 2));
+  return compute_array;
+}
+
 int main()
 {
   cv::Mat src_img = load_img("./kato.jpg", 0);
