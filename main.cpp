@@ -7,14 +7,16 @@
 
 std::vector<std::vector<bool>> mat2array(const cv::Mat &src_img)
 {
-  size_t row = src_img.rows + 2;
-  size_t col = src_img.cols + 2;
+  size_t row = src_img.rows;
+  size_t col = src_img.cols;
   std::vector<std::vector<bool>> img(row, std::vector<bool>(col, 0));
   int y, x;
 #pragma omp parallel for private(y, x) collapse(2)
-  for (y = 1; y < row - 1; y++) {
-    for (x = 1; x < col - 1; x++) {
-      (src_img.at<uint8_t>(y - 1, x - 1) != 0) ? img.at(y).at(x) = 255 : 0;
+  for (y = 0; y < row; y++) {
+    for (x = 0; x < col; x++) {
+      if (src_img.at<uint8_t>(y, x) != 0) {
+        img.at(y).at(x) = 1;
+      }
     }
   }
   return img;
@@ -29,7 +31,9 @@ cv::Mat array2mat(const std::vector<std::vector<bool>> array_img)
 #pragma omp parallel for private(y, x) collapse(2)
   for (y = 0; y < row; y++) {
     for (x = 0; x < col; x++) {
-      compute_img.at<uint8_t>(y, x) = array_img.at(y).at(x);
+      if (array_img.at(y).at(x) == 1) {
+        compute_img.at<uint8_t>(y, x) = 255;
+      }
     }
   }
   return compute_img;
@@ -53,9 +57,9 @@ std::vector<std::vector<float>> morphology_main_func(
 int main()
 {
   cv::Mat src_img = load_img("./kato.jpg", 0);
-  cv::imshow("src", src_img);
   auto array_img = mat2array(src_img);
   auto result_img = array2mat(array_img);
+  cv::imshow("src", result_img);
   cv::waitKey(0);
   return 0;
 }
