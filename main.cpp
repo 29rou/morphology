@@ -39,15 +39,7 @@ cv::Mat load_img(std::string path, int n)
 {
   cv::Mat src = cv::imread(path, n);
   cv::threshold(src, src, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-  auto to2base = [](size_t x) -> size_t { return pow(2, ceil(log2(x))); };
-  cv::Rect roi_rect;
-  roi_rect.width = src.cols;
-  roi_rect.height = src.rows;
-  cv::Mat padded =
-      cv::Mat::zeros(cv::Size(to2base(src.cols), to2base(src.rows)), CV_8U);
-  cv::Mat roi(padded, roi_rect);
-  src.copyTo(roi);
-  return padded;
+  return src;
 }
 
 int main()
