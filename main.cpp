@@ -157,6 +157,7 @@ int main(int argc, char *argv[])
 {
   cv::Mat src_img = load_img(argv[1], 0);
   cv::imshow("src", src_img);
+  cv::waitKey(1);
   auto array_img = mat2array(src_img);
   std::cout << "start" << std::endl;
   auto computed_array = morphology_main_func(array_img, atoi(argv[2]));
